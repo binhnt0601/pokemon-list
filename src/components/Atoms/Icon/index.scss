@@ -1,0 +1,26 @@
+.a-icon {
+	$root: &;
+
+	$icons: 'green-loading';
+
+	@each $icon in $icons {
+		&-#{$icon} {
+			background-image: url('~assets/images/icons/#{$icon}.svg');
+		}
+	}
+
+	display: inline-block;
+	vertical-align: middle;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+
+	&-clickable {
+		cursor: pointer;
+		transition: opacity 0.3s ease-in-out;
+
+		&:hover {
+			opacity: 0.7;
+		}
+	}
+}

@@ -1,0 +1,9 @@
+/* This function should be used for font-size, padding, margin,...
+--------------------------------------------------------- */
+@function rem($pixel) {
+	@if not $pixel {
+		@error 'Missing argument $pixel';
+	}
+
+	@return ($pixel / 14) + rem;
+}

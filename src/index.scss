@@ -1,0 +1,11 @@
+@import '~bootstrap/dist/css/bootstrap-reboot.min.css';
+@import '~bootstrap/dist/css/bootstrap-grid.min.css';
+@import './assets/scss/mixins';
+@import './assets/scss/functions';
+
+/* Components */
+@import 'components/Atoms/Image/index';
+@import 'components/Atoms/Divider/index';
+@import 'components/Molecules/Card/index';
+@import 'components/Molecules/Pagination/index';
+/* Components */
