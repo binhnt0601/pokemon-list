@@ -1,15 +1,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Divider } from "../../components/Atoms/Divider";
-import { Loading } from "../../components/Atoms/Loading";
 import { Card } from "../../components/Molecules/Card";
 import { Pagination } from "../../components/Molecules/Pagination";
 import { Col, Row } from "../../components/Organisms/Grid";
 import AxiosInstance from "../../services/axios";
-import { ListResponse, Pokemon } from "../../services/pokemon/types";
+import { Pokemon } from "../../services/pokemon/types";
 import { BasePageProps } from "../../utils/component";
 import Select from 'react-select';
 import axios from "axios";
+import { areEqual } from "../../utils/function";
 
 type Option = {
     value: number;
@@ -27,31 +27,20 @@ const options: Array<Option> = [
 const IndexPage: React.FC<BasePageProps> = () => {
     const [data, setData] = useState<Array<Pokemon>>([]);
     const [types, setTypes] = useState<Array<Pokemon>>([]);
+    const [filters, setFilters] = useState<Array<Pokemon>> ([]);
+    const [activeByIds, setActiveByIds] = useState<Array<number>>([]);
     const [pokemonsDetail, setPokemons] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const [filter, setFilter] = useState<string | null> (null);
-    const [activeById, setActiveById] = useState<number>(-1);
     const [arrayUrl, setArrayUrl] = useState<string[]>([]);
 
     const [limit, setLimit] = useState<number>(20);
     const [currentPage, setCurrentPage] = useState<number>(1);
 
-    const getList = async() => {
+    const getList = async(isType?: boolean) => {
         try {
-            const res = await AxiosInstance.get(`pokemon?limit=1200`);
+            const res = await AxiosInstance.get(isType ? 'type' : 'pokemon?limit=1200');
             if(res) {
-                setData(res?.data?.results);
-            }
-        } catch (err) {
-            alert(err);
-        }
-    }
-
-    const getTypes = async() => {
-        try {
-            const res = await AxiosInstance.get('type');
-            if(res) {
-                setTypes(res?.data?.results);
+                isType ? setTypes(res?.data?.results) : setData(res?.data?.results);
             }
         } catch (err) {
             alert(err);
@@ -76,23 +65,25 @@ const IndexPage: React.FC<BasePageProps> = () => {
     const getFilterData = async () => {
         setLoading(true);
         let apiArray = [];
-        // const currentIndex = (currentPage*limit) - limit;
-        // for (let i = currentIndex === 0 ? 1 : currentIndex; i < currentPage*limit; i++) {
-        apiArray.push(AxiosInstance.get(String(filter)));
-        // }
+        for (let i = 0; i < filters.length; i++) {
+            apiArray.push(AxiosInstance.get(filters[i]?.url));
+        }
         const res = await axios.all(apiArray);
-        setData(res.map(i => i?.data?.pokemon?.map((i: { pokemon: Pokemon; }) => i.pokemon))[0]);
+        const newDataAfterMap = res.map(i => i?.data?.pokemon?.map((i: { pokemon: Pokemon; }) => i.pokemon)).reduce((acc, val) => {
+            return [...acc, ...val];
+        });
+        setData(newDataAfterMap);
         setLoading(false);
     }
 
     useEffect(() => {
-        if (filter) getFilterData();	
+        if (filters.length > 0) getFilterData();	
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filter]);
+    }, [filters]);
 
     const onSelectType = (item: Pokemon, index: number) => {
-        setFilter(item.url);
-        setActiveById(index);
+        setFilters(prev => filters.includes(item) ? filters.filter(i => i !== item) : [...prev, item]);
+        setActiveByIds(prev => activeByIds.includes(index) ? activeByIds.filter(i => i !== index) : [...prev, index]);
     }
 
     const goToPage = (page: number) => {
@@ -104,13 +95,14 @@ const IndexPage: React.FC<BasePageProps> = () => {
         setCurrentPage(1);
     }
 
-    const dataTest = useMemo(() => {
+    const pokemonDataList = useMemo(() => {
         const cloneData = [...data];
         const dataFilter = cloneData.filter((_, index) => {
             return (currentPage - 1) * limit <= index && index <= (currentPage * limit)-1;
         })
         setArrayUrl(dataFilter.map(i => i.url));
         return dataFilter;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPage, data, limit]);
     
     const pageCount = Math.ceil(data.length / limit);
@@ -122,29 +114,32 @@ const IndexPage: React.FC<BasePageProps> = () => {
 
     useEffect(() => {
         getList();
-        getTypes();	
+        getList(true);	
     }, []);
 
     return (
         <div style={{margin: 20}}>
             <Row>
-                <Row>
-                    <Col xs={1}>Types:</Col>
-                    <Col xs={11}>
-                    {types?.map((item, index) => 
-                        <button 
-                            key={`type-${index.toString()}`} 
-                            type="button"
-                            className={`btn btn-outline-danger ${activeById === index ? 'active' : ''}`}
-                            style={{ margin: '0 10px 15px' }}
-                            onClick={() => onSelectType(item, index)}
-                        >
-                            {item.name}
-                        </button>
-                    )}
-                    </Col>
-                </Row>
-                {dataTest && dataTest?.map((item, index) => {
+                <Col xs={1}>Types:</Col>
+                <Col xs={11}>
+                {types?.map((item, index) => 
+                    <button 
+                        key={`type-${index.toString()}`} 
+                        type="button"
+                        className={`btn btn-outline-danger ${activeByIds.includes(index) ? 'active' : ''}`}
+                        style={{ margin: '0 10px 15px' }}
+                        onClick={() => onSelectType(item, index)}
+                    >
+                        {item.name}
+                    </button>
+                )}
+                </Col>
+            </Row>
+
+            <h4>{data.length} results found.</h4>
+
+            <Row>
+                {pokemonDataList && pokemonDataList?.map((item, index) => {
                     return (
                         <Col
                             key={`${item?.name}-${index.toString()}`}
