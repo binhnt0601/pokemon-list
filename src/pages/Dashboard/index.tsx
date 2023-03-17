@@ -31,7 +31,7 @@ const IndexPage: React.FC<BasePageProps> = () => {
     const [activeByIds, setActiveByIds] = useState<Array<number>>([]);
     const [pokemonsDetail, setPokemons] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const [arrayUrl, setArrayUrl] = useState<string[]>([]);
+    // const [arrayUrl, setArrayUrl] = useState<string[]>([]);
 
     const [limit, setLimit] = useState<number>(20);
     const [currentPage, setCurrentPage] = useState<number>(1);
@@ -51,17 +51,23 @@ const IndexPage: React.FC<BasePageProps> = () => {
         try {
             let apiArray = [];
             setLoading(true);
-            for (let i = 0; i < arrayUrl.length; i++) {
-                apiArray.push(AxiosInstance.get(arrayUrl[i]));
+            const urls = data.map(i => i.url).filter((_, index) => {
+                return (currentPage - 1) * limit <= index && index <= (currentPage * limit) - 1;
+            });
+            for (let i = 0; i < urls.length; i++) {
+                apiArray.push(AxiosInstance.get(urls[i]));
             }
             const res = await axios.all(apiArray);
-            // console.log(res.map(i => i.data?.types).filter(i => areEqual(filters, i.map((ii: any) => ii.type))));
-            // if (filters.length > 0 && res.map(i => i.data?.types).filter(i => areEqual(filters, i.map((ii: any) => ii.type))).length === 0) {
-            //     setCurrentPage(prev => prev + 1)
+            // const filterData = res.map(i => i.data).filter(i => areEqual(filters.map(f => f.name), i.types.map((ii: {type: Pokemon}) => ii.type.name)));
+            // if (
+            //     filters.length > 0 && filterData.length === 0
+            // ) {
+            //     setCurrentPage(prev => prev + 1);
+            //     setPokemons(filterData);
             // } else {
-                
+            //     console.log(filterData, res.map(i => i.data))
+            //     setPokemons(res.map(i => i.data));
             // }
-            // console.log(filters, res.map(i => i.data?.types?.map((ii: any) => ii.type)));
             setPokemons(res.map(i => i.data));
             setLoading(false);
         } catch (err) {
@@ -107,21 +113,20 @@ const IndexPage: React.FC<BasePageProps> = () => {
     }
 
     const pokemonDataList = useMemo(() => {
-        const cloneData = [...data];
-        const dataFilter = cloneData.filter((_, index) => {
+        let newData = [...data];
+        newData = newData.filter((_, index) => {
             return (currentPage - 1) * limit <= index && index <= (currentPage * limit) - 1;
         })
-        setArrayUrl(dataFilter.map(i => i.url));
-        return dataFilter;
+        return newData;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentPage, data, limit]);
-    
+
     const pageCount = Math.ceil(data.length / limit);
 
     useEffect(()=>{
-        if (arrayUrl.length > 0) getDetail();
+        if (pokemonDataList.length > 0) getDetail();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [arrayUrl]);
+    }, [pokemonDataList]);
 
     useEffect(() => {
         getList();
@@ -155,7 +160,7 @@ const IndexPage: React.FC<BasePageProps> = () => {
                     </h4>
                     <h4>
                         All pages have <span className="text-success">{data.length} </span> 
-                        {data.length === 1 ? 'result' : 'results'} found.
+                        {pokemonsDetail.length === 1 ? 'result' : 'results'} found.
                     </h4> 
 
                 <Row>
@@ -185,6 +190,7 @@ const IndexPage: React.FC<BasePageProps> = () => {
                 <div className="d-flex justify-content-center">
                     <Select options={options} onChange={onSelectChange} defaultValue={options.find(i => i.value === limit)} />
                     <Pagination
+                        defaultCurrentPage={currentPage}
                         pageCount={pageCount}
                         onPageChange={goToPage}
                     />
