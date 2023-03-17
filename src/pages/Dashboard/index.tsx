@@ -29,10 +29,8 @@ const IndexPage: React.FC<BasePageProps> = () => {
     const [types, setTypes] = useState<Array<Pokemon>>([]);
     const [filters, setFilters] = useState<Array<Pokemon>> ([]);
     const [activeByIds, setActiveByIds] = useState<Array<number>>([]);
-    const [pokemonsDetail, setPokemons] = useState<any[]>([]);
+    const [pokemonsDetail, setPokemonsDetail] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const [arrayUrls, setArrayUrls] = useState<string[]>([]);
-
     const [limit, setLimit] = useState<number>(20);
     const [currentPage, setCurrentPage] = useState<number>(1);
 
@@ -62,12 +60,11 @@ const IndexPage: React.FC<BasePageProps> = () => {
             // if (
             //     filters.length > 0 && filterData.length > 0
             // ) {
-            //     setPokemons(filterData);
+            //     setPokemonsDetail(filterData);
             // } else {
-            //     setPokemons(res.map(i => i.data));
+            //     setPokemonsDetail(res.map(i => i.data));
             // }
-            setArrayUrls(urls);
-            setPokemons(res.map(i => i.data));
+            setPokemonsDetail(res.map(i => i.data));
             setLoading(false);
         } catch (err) {
             alert(err);
@@ -145,8 +142,8 @@ const IndexPage: React.FC<BasePageProps> = () => {
             {data.length > 0 ?             
                 <>
                     <h4>
-                        Current page ({currentPage}) has <span className="text-success">{arrayUrls.length} </span> 
-                        {arrayUrls.length === 1 ? 'result' : 'results'} found.
+                        Current page ({currentPage}) has <span className="text-success">{pokemonsDetail.length} </span> 
+                        {pokemonsDetail.length === 1 ? 'result' : 'results'} found.
                     </h4>
                     <h4>
                         All pages have <span className="text-success">{data.length} </span> 
