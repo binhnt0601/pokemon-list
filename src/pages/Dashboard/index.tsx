@@ -31,7 +31,7 @@ const IndexPage: React.FC<BasePageProps> = () => {
     const [activeByIds, setActiveByIds] = useState<Array<number>>([]);
     const [pokemonsDetail, setPokemons] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    // const [arrayUrl, setArrayUrl] = useState<string[]>([]);
+    const [arrayUrls, setArrayUrls] = useState<string[]>([]);
 
     const [limit, setLimit] = useState<number>(20);
     const [currentPage, setCurrentPage] = useState<number>(1);
@@ -60,14 +60,13 @@ const IndexPage: React.FC<BasePageProps> = () => {
             const res = await axios.all(apiArray);
             // const filterData = res.map(i => i.data).filter(i => areEqual(filters.map(f => f.name), i.types.map((ii: {type: Pokemon}) => ii.type.name)));
             // if (
-            //     filters.length > 0 && filterData.length === 0
+            //     filters.length > 0 && filterData.length > 0
             // ) {
-            //     setCurrentPage(prev => prev + 1);
             //     setPokemons(filterData);
             // } else {
-            //     console.log(filterData, res.map(i => i.data))
             //     setPokemons(res.map(i => i.data));
             // }
+            setArrayUrls(urls);
             setPokemons(res.map(i => i.data));
             setLoading(false);
         } catch (err) {
@@ -112,21 +111,12 @@ const IndexPage: React.FC<BasePageProps> = () => {
         setCurrentPage(1);
     }
 
-    const pokemonDataList = useMemo(() => {
-        let newData = [...data];
-        newData = newData.filter((_, index) => {
-            return (currentPage - 1) * limit <= index && index <= (currentPage * limit) - 1;
-        })
-        return newData;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentPage, data, limit]);
-
     const pageCount = Math.ceil(data.length / limit);
 
     useEffect(()=>{
-        if (pokemonDataList.length > 0) getDetail();
+        if (data.length > 0) getDetail();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pokemonDataList]);
+    }, [currentPage, data, limit, filters]);
 
     useEffect(() => {
         getList();
@@ -152,11 +142,11 @@ const IndexPage: React.FC<BasePageProps> = () => {
                 </Col>
             </Row>
 
-            {pokemonDataList.length > 0 ?             
+            {data.length > 0 ?             
                 <>
                     <h4>
-                        Current page ({currentPage}) has <span className="text-success">{pokemonDataList.length} </span> 
-                        {pokemonDataList.length === 1 ? 'result' : 'results'} found.
+                        Current page ({currentPage}) has <span className="text-success">{arrayUrls.length} </span> 
+                        {arrayUrls.length === 1 ? 'result' : 'results'} found.
                     </h4>
                     <h4>
                         All pages have <span className="text-success">{data.length} </span> 
@@ -164,7 +154,7 @@ const IndexPage: React.FC<BasePageProps> = () => {
                     </h4> 
 
                 <Row>
-                    {pokemonDataList && pokemonDataList?.map((item, index) => {
+                    {pokemonsDetail && pokemonsDetail?.map((item, index) => {
                         return (
                             <Col
                                 key={`${item?.name}-${index.toString()}`}
@@ -176,7 +166,7 @@ const IndexPage: React.FC<BasePageProps> = () => {
                                 {pokemonsDetail[index]?.sprites &&
                                     <Card 
                                         isLoading={loading}
-                                        title={item?.name} 
+                                        title={pokemonsDetail[index]?.name} 
                                         src={pokemonsDetail[index]?.sprites?.other['official-artwork']?.front_default} 
                                     />
                                 }
