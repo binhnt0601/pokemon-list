@@ -38,7 +38,7 @@ const IndexPage: React.FC<BasePageProps> = () => {
 
     const getList = async(isType?: boolean) => {
         try {
-            const res = await AxiosInstance.get(isType ? 'type' : 'pokemon?limit=1200');
+            const res = await AxiosInstance.get(isType ? 'type' : 'pokemon?limit=1281');
             if(res) {
                 isType ? setTypes(res?.data?.results) : setData(res?.data?.results);
             }
@@ -55,6 +55,13 @@ const IndexPage: React.FC<BasePageProps> = () => {
                 apiArray.push(AxiosInstance.get(arrayUrl[i]));
             }
             const res = await axios.all(apiArray);
+            // console.log(res.map(i => i.data?.types).filter(i => areEqual(filters, i.map((ii: any) => ii.type))));
+            // if (filters.length > 0 && res.map(i => i.data?.types).filter(i => areEqual(filters, i.map((ii: any) => ii.type))).length === 0) {
+            //     setCurrentPage(prev => prev + 1)
+            // } else {
+                
+            // }
+            // console.log(filters, res.map(i => i.data?.types?.map((ii: any) => ii.type)));
             setPokemons(res.map(i => i.data));
             setLoading(false);
         } catch (err) {
@@ -78,12 +85,16 @@ const IndexPage: React.FC<BasePageProps> = () => {
 
     useEffect(() => {
         if (filters.length > 0) getFilterData();	
+        else {
+            getList();
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filters]);
 
     const onSelectType = (item: Pokemon, index: number) => {
         setFilters(prev => filters.includes(item) ? filters.filter(i => i !== item) : [...prev, item]);
         setActiveByIds(prev => activeByIds.includes(index) ? activeByIds.filter(i => i !== index) : [...prev, index]);
+        setCurrentPage(1);
     }
 
     const goToPage = (page: number) => {
@@ -98,7 +109,7 @@ const IndexPage: React.FC<BasePageProps> = () => {
     const pokemonDataList = useMemo(() => {
         const cloneData = [...data];
         const dataFilter = cloneData.filter((_, index) => {
-            return (currentPage - 1) * limit <= index && index <= (currentPage * limit)-1;
+            return (currentPage - 1) * limit <= index && index <= (currentPage * limit) - 1;
         })
         setArrayUrl(dataFilter.map(i => i.url));
         return dataFilter;
@@ -136,40 +147,53 @@ const IndexPage: React.FC<BasePageProps> = () => {
                 </Col>
             </Row>
 
-            <h4>{data.length} results found.</h4>
+            {pokemonDataList.length > 0 ?             
+                <>
+                    <h4>
+                        Current page ({currentPage}) has <span className="text-success">{pokemonDataList.length} </span> 
+                        {pokemonDataList.length === 1 ? 'result' : 'results'} found.
+                    </h4>
+                    <h4>
+                        All pages have <span className="text-success">{data.length} </span> 
+                        {data.length === 1 ? 'result' : 'results'} found.
+                    </h4> 
 
-            <Row>
-                {pokemonDataList && pokemonDataList?.map((item, index) => {
-                    return (
-                        <Col
-                            key={`${item?.name}-${index.toString()}`}
-                            lg='2'
-                            md="3"
-                            xs="4"
-                            className="d-flex justify-content-center align-items-center justify-content-md-start mb-2 mt-2"
-                        >
-                            {pokemonsDetail[index]?.sprites &&
-                                <Card 
-                                    isLoading={loading}
-                                    title={item?.name} 
-                                    src={pokemonsDetail[index]?.sprites?.other['official-artwork']?.front_default} 
-                                />
-                            }
-                        </Col>
-                    )
-                })}
-            </Row>
-            <div className="mt-2 mb-2">
-                <Divider />
-            </div>
-            <div className="d-flex justify-content-center">
-                <Select options={options} onChange={onSelectChange} defaultValue={options.find(i => i.value === limit)} />
-                <Pagination
-                    pageCount={pageCount}
-                    onPageChange={goToPage}
-                />
-            </div>
-        </div>
+                <Row>
+                    {pokemonDataList && pokemonDataList?.map((item, index) => {
+                        return (
+                            <Col
+                                key={`${item?.name}-${index.toString()}`}
+                                lg='2'
+                                md="3"
+                                xs="4"
+                                className="d-flex justify-content-center align-items-center justify-content-md-start mb-2 mt-2"
+                            >
+                                {pokemonsDetail[index]?.sprites &&
+                                    <Card 
+                                        isLoading={loading}
+                                        title={item?.name} 
+                                        src={pokemonsDetail[index]?.sprites?.other['official-artwork']?.front_default} 
+                                    />
+                                }
+                            </Col>
+                        )
+                    })}
+                </Row>
+                <div className="mt-2 mb-2">
+                    <Divider />
+                </div>
+                <div className="d-flex justify-content-center">
+                    <Select options={options} onChange={onSelectChange} defaultValue={options.find(i => i.value === limit)} />
+                    <Pagination
+                        pageCount={pageCount}
+                        onPageChange={goToPage}
+                    />
+                </div>
+            </> 
+            :
+            <h2 className="text-center">No results found.</h2>
+        }
+    </div>
 )};
 
 export default IndexPage;
